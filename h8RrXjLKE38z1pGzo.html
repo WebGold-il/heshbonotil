@@ -1,0 +1,673 @@
+<html><head><base href=".">
+  <meta charset="UTF-8">
+  <title>&#x5d4;&#x5d5;&#x5e6;&#x5d0;&#x5d5;&#x5ea; &#x5e0;&#x5d9;&#x5d4;&#x5d5;&#x5dc; &#x5ea;&#x5e7;&#x5e6;&#x5d9;&#x5d1; &quot;&#x5d3;&#x5e3;&quot;</title>
+  <style>
+    body { direction: rtl; font-family: Arial, sans-serif; }
+    
+    .input-section, .table-section {
+      margin: 20px;
+      padding: 20px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    .expense-input {
+      width: 100%;
+      min-height: 150px;
+      margin-bottom: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: right;
+    }
+
+    th { background-color: #f2f2f2; }
+
+    .category-selector {
+      margin: 10px 0;
+    }
+
+    .totals {
+      margin-top: 20px;
+      font-weight: bold;
+    }
+
+    .delete-row {
+      background-color: #ff4444;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      cursor: pointer;
+      border-radius: 3px;
+    }
+
+    .delete-row:hover {
+      background-color: #cc0000;
+    }
+
+    .category-select {
+      width: 100%;
+      padding: 5px;
+    }
+
+    .category-select-wrapper {
+      position: relative;
+    }
+
+    .category-autocomplete {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: white;
+      border: 1px solid #ddd;
+      border-top: none;
+      max-height: 200px;
+      overflow-y: auto;
+      z-index: 1000;
+      display: none;
+    }
+
+    .category-autocomplete div {
+      padding: 8px;
+      cursor: pointer;
+    }
+
+    .category-autocomplete div:hover {
+      background-color: #f0f0f0;
+    }
+
+    .category-input {
+      width: 100%;
+      padding: 5px;
+      box-sizing: border-box;
+    }
+
+    .select-checkbox {
+      width: 18px;
+      height: 18px;
+      margin: 0;
+    }
+
+    .bulk-actions {
+      margin: 10px 0;
+    }
+
+    .bulk-delete-btn {
+      background-color: #ff4444;
+      color: white;
+      border: none;
+      padding: 8px 15px;
+      cursor: pointer;
+      border-radius: 3px;
+      font-weight: bold;
+    }
+
+    .bulk-delete-btn:hover {
+      background-color: #cc0000;
+    }
+
+    .export-btn {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      padding: 8px 15px;
+      cursor: pointer;
+      border-radius: 3px;
+      font-weight: bold;
+      margin-right: 10px;
+    }
+
+    .export-btn:hover {
+      background-color: #45a049;
+    }
+
+    .selected-row {
+      background-color: #fff3f3;
+    }
+
+    .sortable-header {
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .sortable-header:hover {
+      background-color: #e2e2e2;
+    }
+
+    .sort-icon::after {
+      margin-right: 5px;
+      content: '⇕';
+    }
+
+    .sort-asc::after {
+      content: '↑';
+    }
+
+    .sort-desc::after {
+      content: '↓';
+    }
+    
+    .month-section {
+      margin: 20px 0;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+
+    .month-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px;
+      background: #f5f5f5;
+      margin: -10px -10px 10px -10px;
+      border-radius: 5px 5px 0 0;
+    }
+
+    .month-header label {
+      display: flex;
+      align-items: center;
+      margin: 0 10px;
+      cursor: pointer;
+    }
+
+    .month-total {
+      font-weight: bold;  
+    }
+
+    .month-export-checkbox {
+      margin-right: 10px;
+      margin-left: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="input-section">
+    <h2>&#x5d4;&#x5d5;&#x5e6;&#x5d0;&#x5d5;&#x5ea; &#x5d4;&#x5d6;&#x5e0;&#x5ea; &#x5e0;&#x5ea;&#x5d5;&#x5e0;&#x5d9;&#x5dd;</h2>
+    <textarea id="expenseInput" class="expense-input" placeholder="&#x5d4;&#x5d5;&#x5e6;&#x5d0;&#x5d5;&#x5ea; &#x5d4;&#x5d6;&#x5e0;&#x5ea; &#x5e0;&#x5ea;&#x5d5;&#x5e0;&#x5d9;&#x5dd; &#x5d1;&#x5e4;&#x5d5;&#x5e8;&#x5de;&#x5df; CSV"></textarea>
+    <button onclick="processData()">&#x5e2;&#x5d9;&#x5d1;&#x5d5;&#x5d3; &#x5e0;&#x5ea;&#x5d5;&#x5e0;&#x5d9;&#x5dd;</button>
+  </div>
+
+  <div class="category-selector">
+    <select id="categoryFilter">
+      <option value="all">&#x5db;&#x5dc; &#x5d4;&#x5e7;&#x5d8;&#x5d2;&#x5d5;&#x5e8;&#x5d9;&#x5d4;</option>
+      <option value="&#x5d3;&#x5dc;&#x5e7;">&#x5d3;&#x5dc;&#x5e7;</option>
+      <option value="&#x5d7;&#x5e0;&#x5d9;&#x5d9;&#x5d4;">&#x5d7;&#x5e0;&#x5d9;&#x5d9;&#x5d4;</option>
+      <option value="&#x5d1;&#x5d9;&#x5d8;&#x5d5;&#x5d7; &#x5e8;&#x5db;&#x5d1;">&#x5d1;&#x5d9;&#x5d8;&#x5d5;&#x5d7; &#x5e8;&#x5db;&#x5d1;</option>
+      <option value="&#x5e8;&#x5d9;&#x5e9;&#x5d5;&#x5d9; &#x5d5;&#x5de;&#x5e1;">&#x5e8;&#x5d9;&#x5e9;&#x5d5;&#x5d9; &#x5d5;&#x5de;&#x5e1;</option>
+      <option value="&#x5ea;&#x5d7;&#x5d6;&#x5d5;&#x5e7;&#x5d4; &#x5d5;&#x5ea;&#x5d9;&#x5e7;&#x5d5;&#x5e0;&#x5d9;&#x5dd;">&#x5ea;&#x5d7;&#x5d6;&#x5d5;&#x5e7;&#x5d4; &#x5d5;&#x5ea;&#x5d9;&#x5e7;&#x5d5;&#x5e0;&#x5d9;&#x5dd;</option>
+      <option value="&#x5e0;&#x5e1;&#x5d9;&#x5e2;&#x5d5;&#x5ea;">&#x5e0;&#x5e1;&#x5d9;&#x5e2;&#x5d5;&#x5ea;</option>
+      <option value="&#x5d3;&#x5dc;&#x5e7; &#x5d5;&#x5e9;&#x5de;&#x5df;">&#x5d3;&#x5dc;&#x5e7; &#x5d5;&#x5e9;&#x5de;&#x5df;</option>
+      <option value="&#x5d8;&#x5dc;&#x5e4;&#x5d5;&#x5df; &#x5d5;&#x5d0;&#x5d9;&#x5e0;&#x5d8;&#x5e8;&#x5e0;&#x5d8;">&#x5d8;&#x5dc;&#x5e4;&#x5d5;&#x5df; &#x5d5;&#x5d0;&#x5d9;&#x5e0;&#x5d8;&#x5e8;&#x5e0;&#x5d8;</option>
+      <option value="&#x5d1;&#x5d9;&#x5d8;&#x5d5;&#x5d7; &#x5d7;&#x5d9;&#x5d9;&#x5dd;">&#x5d1;&#x5d9;&#x5d8;&#x5d5;&#x5d7; &#x5d7;&#x5d9;&#x5d9;&#x5dd;</option>
+      <option value="&#x5d1;&#x5d9;&#x5d8;&#x5d5;&#x5d7; &#x5d1;&#x5e8;&#x5d9;&#x5d0;&#x5d5;&#x5ea;">&#x5d1;&#x5d9;&#x5d8;&#x5d5;&#x5d7; &#x5d1;&#x5e8;&#x5d9;&#x5d0;&#x5d5;&#x5ea;</option>
+      <option value="&#x5e7;&#x5e0;&#x5d9;&#x5d5;&#x5ea;">&#x5e7;&#x5e0;&#x5d9;&#x5d5;&#x5ea;</option>
+      <option value="&#x5de;&#x5d6;&#x5d5;&#x5df;">&#x5de;&#x5d6;&#x5d5;&#x5df;</option>
+      <option value="&#x5d1;&#x5d9;&#x5dc;&#x5d5;&#x5d9;&#x5d9;&#x5dd;">&#x5d1;&#x5d9;&#x5dc;&#x5d5;&#x5d9;&#x5d9;&#x5dd;</option>
+      <option value="&#x5e0;&#x5d5;&#x5e4;&#x5e9;">&#x5e0;&#x5d5;&#x5e4;&#x5e9;</option>
+      <option value="&#x5d7;&#x5d9;&#x5e0;&#x5d5;&#x5da;">&#x5d7;&#x5d9;&#x5e0;&#x5d5;&#x5da;</option>
+      <option value="&#x5e8;&#x5db;&#x5d9;&#x5e9;&#x5d5;&#x5ea;">&#x5e8;&#x5db;&#x5d9;&#x5e9;&#x5d5;&#x5ea;</option>
+      <option value="&#x5e9;&#x5d5;&#x5e0;&#x5d5;&#x5ea;">&#x5e9;&#x5d5;&#x5e0;&#x5d5;&#x5ea;</option>
+      <option value="&#x5d4;&#x5dc;&#x5d5;&#x5d5;&#x5d0;&#x5d5;&#x5ea;">&#x5d4;&#x5dc;&#x5d5;&#x5d5;&#x5d0;&#x5d5;&#x5ea;</option>
+      <option value="&#x5d7;&#x5d5;&#x5d1;&#x5d5;&#x5ea;">&#x5d7;&#x5d5;&#x5d1;&#x5d5;&#x5ea;</option>
+      <option value="&#x5d4;&#x5db;&#x5e0;&#x5e1;&#x5d5;&#x5ea;">&#x5d4;&#x5db;&#x5e0;&#x5e1;&#x5d5;&#x5ea;</option>
+      <option value="&#x5d7;&#x5e1;&#x5db;&#x5d5;&#x5e0;&#x5d5;&#x5ea;">&#x5d7;&#x5e1;&#x5db;&#x5d5;&#x5e0;&#x5d5;&#x5ea;</option>
+      <option value="&#x5d4;&#x5e9;&#x5e7;&#x5e2;&#x5d5;&#x5ea;">&#x5d4;&#x5e9;&#x5e7;&#x5e2;&#x5d5;&#x5ea;</option>
+    </select>
+  </div>
+
+  <div class="table-section">
+    <h2>&#x5e8;&#x5e9;&#x5d9;&#x5de;&#x5ea; &#x5d4;&#x5d5;&#x5e6;&#x5d0;&#x5d5;&#x5ea;</h2>
+    <div class="bulk-actions">
+      <button onclick="deleteSelected()" class="bulk-delete-btn">&#x5de;&#x5d7;&#x5d9;&#x5e7;&#x5ea; &#x5d4;&#x5d5;&#x5e6;&#x5d0;&#x5d5;&#x5ea; &#x5e0;&#x5d1;&#x5d7;&#x5e8;&#x5d5;&#x5ea;</button>
+      <button onclick="exportToExcel()" class="export-btn">&#x5d9;&#x5d9;&#x5e6;&#x5d5;&#x5d0; &#x5dc;-Excel</button>
+      <button onclick="exportToCSV()" class="export-btn">&#x5d9;&#x5d9;&#x5e6;&#x5d5;&#x5d0; &#x5dc;-CSV</button>
+    </div>
+    <table id="expenseTable">
+      <thead>
+        <tr>
+          <th><input type="checkbox" id="selectAll" onclick="toggleAllCheckboxes()"></th>
+          <th class="sortable-header" data-sort="date">&#x5ea;&#x5d0;&#x5e8;&#x5d9;&#x5da;<span class="sort-icon"></span></th>
+          <th class="sortable-header" data-sort="year">&#x5e9;&#x5e0;&#x5d4;<span class="sort-icon"></span></th>
+          <th class="sortable-header" data-sort="category">&#x5e7;&#x5d8;&#x5d2;&#x5d5;&#x5e8;&#x5d9;&#x5d4;<span class="sort-icon"></span></th>
+          <th class="sortable-header" data-sort="amount">&#x5e1;&#x5db;&#x5d5;&#x5dd;<span class="sort-icon"></span></th>
+          <th class="sortable-header" data-sort="business">&#x5e4;&#x5e8;&#x5d8;&#x5d9; &#x5e2;&#x5e1;&#x5e7;<span class="sort-icon"></span></th>
+          <th>&#x5e4;&#x5e2;&#x5d5;&#x5dc;&#x5d5;&#x5ea;</th>
+        </tr>
+      </thead>
+      <tbody id="expenseTableBody"></tbody>
+    </table>
+    <div class="totals" id="totalExpenses"></div>
+  </div>
+  
+  <div id="monthlyExpenses"></div>
+
+  <script>let expenses = [];
+const categories = ["דלק", "חניה", "אחזקת משרד", "משרדיות", "מערכות לעבודה", "ייעוץ", "דומיין ואיחסון", "טלפון", "תרומות", "ביטוח רכב", "פייסבוק", "אחזקת רכב", "גוגל", "קורסים ותוכנות", "שירותי סלולר", "אינטרנט", "רכישת לידים", "כתיבת תוכן", "קישורים", "כיבוד", "ארנונה", "חשמל", "מים"];
+function toggleAllCheckboxes() {
+  const selectAll = document.getElementById('selectAll');
+  const allCheckboxes = document.querySelectorAll('.select-checkbox, .month-select-all');
+  allCheckboxes.forEach(checkbox => {
+    checkbox.checked = selectAll.checked;
+    const row = checkbox.closest('tr');
+    if (row) {
+      if (selectAll.checked) {
+        row.classList.add('selected-row');
+      } else {
+        row.classList.remove('selected-row');
+      }
+    }
+  });
+}
+function deleteSelected() {
+  const selectedRows = document.querySelectorAll('.select-checkbox:checked');
+  if (selectedRows.length === 0) {
+    alert('נא לבחור לפחות הוצאה אחת למחיקה');
+    return;
+  }
+  if (confirm(`האם אתה בטוח שברצונך למחוק ${selectedRows.length} הוצאות?`)) {
+    const idsToDelete = Array.from(selectedRows).map(checkbox => checkbox.dataset.expenseId);
+    expenses = expenses.filter(exp => !idsToDelete.includes(exp.id.toString()));
+    updateTable();
+    document.getElementById('selectAll').checked = false;
+  }
+}
+function createCategorySelect(selectedCategory) {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'category-select-wrapper';
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'category-input';
+  input.value = selectedCategory;
+  const autocompleteDiv = document.createElement('div');
+  autocompleteDiv.className = 'category-autocomplete';
+  input.addEventListener('input', function () {
+    const value = this.value.toLowerCase();
+    autocompleteDiv.innerHTML = '';
+    const filtered = categories.filter(cat => cat.toLowerCase().includes(value));
+    if (filtered.length && value) {
+      autocompleteDiv.style.display = 'block';
+      filtered.forEach(cat => {
+        const div = document.createElement('div');
+        div.textContent = cat;
+        div.onclick = function () {
+          input.value = cat;
+          autocompleteDiv.style.display = 'none';
+          const businessName = input.closest('tr').cells[5].textContent;
+          expenses = expenses.map(exp => {
+            if (exp.business === businessName) {
+              return {
+                ...exp,
+                category: cat
+              };
+            }
+            return exp;
+          });
+          updateTable();
+        };
+        autocompleteDiv.appendChild(div);
+      });
+    } else {
+      autocompleteDiv.style.display = 'none';
+    }
+  });
+  input.addEventListener('blur', function () {
+    setTimeout(() => {
+      autocompleteDiv.style.display = 'none';
+    }, 200);
+  });
+  input.addEventListener('keypress', function (e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const newCategory = this.value;
+      const businessName = this.closest('tr').cells[5].textContent;
+      expenses = expenses.map(exp => {
+        if (exp.business === businessName) {
+          return {
+            ...exp,
+            category: newCategory
+          };
+        }
+        return exp;
+      });
+      updateTable();
+    }
+  });
+  input.addEventListener('change', e => {
+    const newCategory = e.target.value;
+    const businessName = e.target.closest('tr').cells[5].textContent;
+    expenses = expenses.map(exp => {
+      if (exp.business === businessName) {
+        return {
+          ...exp,
+          category: newCategory
+        };
+      }
+      return exp;
+    });
+    updateTable();
+  });
+  wrapper.appendChild(input);
+  wrapper.appendChild(autocompleteDiv);
+  return wrapper;
+}
+function processData() {
+  const input = document.getElementById('expenseInput').value;
+  try {
+    const newExpenses = parseCSVInput(input);
+    expenses = [...expenses, ...newExpenses];
+    updateTable();
+    document.getElementById('expenseInput').value = '';
+  } catch (e) {
+    alert('שגיאה בעיבוד הנתונים: ' + e.message);
+  }
+}
+function parseCSVInput(input) {
+  const lines = input.split('\n');
+  const parsedExpenses = [];
+  for (let i = 1; i < lines.length; i++) {
+    if (lines[i].trim() === '') continue;
+    const matches = lines[i].match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
+    if (!matches || matches.length < 3) continue;
+    const [date, business, amount, category] = matches.map(val => val.replace(/^"|"$/g, '').trim());
+    if (date && business && amount) {
+      const [day, month, year] = date.split('/');
+      parsedExpenses.push({
+        id: Date.now() + Math.random(),
+        date: new Date(year, month - 1, day),
+        business,
+        amount: parseFloat(amount.replace(',', '')),
+        category: category || 'כללי'
+      });
+    }
+  }
+  return parsedExpenses;
+}
+function updateTable() {
+  const monthlyContainer = document.getElementById('monthlyExpenses');
+  monthlyContainer.innerHTML = '';
+  const categoryFilter = document.getElementById('categoryFilter').value;
+  let filteredExpenses = expenses;
+  if (categoryFilter !== 'all') {
+    filteredExpenses = expenses.filter(exp => exp.category === categoryFilter);
+  }
+  const monthlyGroups = groupExpensesByMonth(filteredExpenses);
+  const sortedMonths = Object.keys(monthlyGroups).sort((a, b) => {
+    const [monthA, yearA] = a.split('-');
+    const [monthB, yearB] = b.split('-');
+    return yearB - yearA || monthB - monthA;
+  });
+  sortedMonths.forEach(monthKey => {
+    const [month, year] = monthKey.split('-');
+    const monthExpenses = monthlyGroups[monthKey];
+    monthExpenses.sort((a, b) => {
+      let valueA, valueB;
+      switch (currentSort.column) {
+        case 'date':
+          valueA = a.date.getTime();
+          valueB = b.date.getTime();
+          break;
+        case 'year':
+          valueA = a.date.getFullYear();
+          valueB = b.date.getFullYear();
+          break;
+        case 'category':
+          valueA = a.category;
+          valueB = b.category;
+          break;
+        case 'amount':
+          valueA = a.amount;
+          valueB = b.amount;
+          break;
+        case 'business':
+          valueA = a.business;
+          valueB = b.business;
+          break;
+        default:
+          valueA = a.date.getTime();
+          valueB = b.date.getTime();
+      }
+      if (currentSort.direction === 'asc') {
+        return valueA > valueB ? 1 : -1;
+      } else {
+        return valueA < valueB ? 1 : -1;
+      }
+    });
+    const monthSection = document.createElement('div');
+    monthSection.className = 'month-section';
+    const monthHeader = document.createElement('div');
+    monthHeader.className = 'month-header';
+    const monthTitle = document.createElement('h3');
+    monthTitle.textContent = `${getMonthName(parseInt(month))} ${year}`;
+    const exportCheckbox = document.createElement('input');
+    exportCheckbox.type = 'checkbox';
+    exportCheckbox.className = 'month-export-checkbox';
+    exportCheckbox.dataset.month = monthKey;
+    const checkboxLabel = document.createElement('label');
+    checkboxLabel.appendChild(exportCheckbox);
+    checkboxLabel.appendChild(document.createTextNode(' בחר לייצוא'));
+    const monthTotal = document.createElement('div');
+    const totalSum = monthExpenses.reduce((sum, exp) => sum + exp.amount, 0);
+    monthTotal.className = 'month-total';
+    monthTotal.textContent = `סה"כ: ${totalSum.toFixed(2)} ₪`;
+    monthHeader.appendChild(monthTitle);
+    monthHeader.appendChild(checkboxLabel);
+    monthHeader.appendChild(monthTotal);
+    monthSection.appendChild(monthHeader);
+    const table = document.createElement('table');
+    table.id = `expense-table-${monthKey}`;
+    const thead = document.createElement('thead');
+    thead.innerHTML = `
+      <tr>
+        <th><input type="checkbox" class="month-select-all" data-month="${monthKey}"></th>
+        <th class="sortable-header" data-sort="date">תאריך<span class="sort-icon"></span></th>
+        <th class="sortable-header" data-sort="year">שנה<span class="sort-icon"></span></th>
+        <th class="sortable-header" data-sort="category">קטגוריה<span class="sort-icon"></span></th>
+        <th class="sortable-header" data-sort="amount">סכום<span class="sort-icon"></span></th>
+        <th class="sortable-header" data-sort="business">פרטי עסק<span class="sort-icon"></span></th>
+        <th>פעולות</th>
+      </tr>
+    `;
+    table.appendChild(thead);
+    const tbody = document.createElement('tbody');
+    monthExpenses.forEach(expense => {
+      const row = tbody.insertRow();
+      const checkboxCell = row.insertCell(0);
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.className = 'select-checkbox';
+      checkbox.dataset.expenseId = expense.id;
+      checkbox.dataset.month = monthKey;
+      checkbox.addEventListener('change', function () {
+        if (this.checked) {
+          row.classList.add('selected-row');
+        } else {
+          row.classList.remove('selected-row');
+          document.querySelector(`.month-select-all[data-month="${monthKey}"]`).checked = false;
+        }
+      });
+      checkboxCell.appendChild(checkbox);
+      const dateCell = row.insertCell(1);
+      dateCell.textContent = `${expense.date.getDate()}/${expense.date.getMonth() + 1}`;
+      row.insertCell(2).textContent = expense.date.getFullYear();
+      const categoryCell = row.insertCell(3);
+      const categoryWrapper = createCategorySelect(expense.category);
+      const categoryInput = categoryWrapper.querySelector('input');
+      categoryInput.addEventListener('change', e => {
+        expense.category = e.target.value;
+        updateTable();
+      });
+      categoryCell.appendChild(categoryWrapper);
+      row.insertCell(4).textContent = expense.amount.toFixed(2) + ' ₪';
+      row.insertCell(5).textContent = expense.business;
+      const deleteCell = row.insertCell(6);
+      const deleteButton = document.createElement('button');
+      deleteButton.textContent = 'מחק';
+      deleteButton.className = 'delete-row';
+      deleteButton.onclick = () => deleteExpense(expense.id);
+      deleteCell.appendChild(deleteButton);
+    });
+    table.appendChild(tbody);
+    monthSection.appendChild(table);
+    monthlyContainer.appendChild(monthSection);
+  });
+  document.querySelectorAll('.month-select-all').forEach(checkbox => {
+    checkbox.addEventListener('change', function () {
+      const monthKey = this.dataset.month;
+      const monthCheckboxes = document.querySelectorAll(`.select-checkbox[data-month="${monthKey}"]`);
+      monthCheckboxes.forEach(cb => {
+        cb.checked = this.checked;
+        const row = cb.closest('tr');
+        if (this.checked) {
+          row.classList.add('selected-row');
+        } else {
+          row.classList.remove('selected-row');
+        }
+      });
+    });
+  });
+  initSortableHeaders();
+}
+function deleteExpense(id) {
+  if (confirm('האם אתה בטוח שברצונך למחוק הוצאה זו?')) {
+    expenses = expenses.filter(exp => exp.id !== id);
+    updateTable();
+  }
+}
+function exportToCSV() {
+  const selectedMonths = getSelectedMonths();
+  if (selectedMonths.length === 0) {
+    alert('נא לבחור לפחות חודש אחד לייצוא');
+    return;
+  }
+
+  let csvContent = "תאריך,שנה,קטגוריה,סכום,פרטי עסק\n";
+  const filteredExpenses = getFilteredExpenses().filter(expense => {
+    const monthKey = `${expense.date.getMonth() + 1}-${expense.date.getFullYear()}`;
+    return selectedMonths.includes(monthKey);
+  });
+  
+  filteredExpenses.forEach(expense => {
+    const date = `${expense.date.getDate()}/${expense.date.getMonth() + 1}/${expense.date.getFullYear()}`;
+    const row = [date, expense.date.getFullYear(), expense.category, expense.amount.toFixed(2), expense.business]
+      .map(cell => `"${cell}"`).join(',');
+    csvContent += row + '\n';
+  });
+  
+  downloadFile(csvContent, 'expenses.csv', 'text/csv;charset=utf-8;');
+}
+
+function exportToExcel() {
+  const selectedMonths = getSelectedMonths();
+  if (selectedMonths.length === 0) {
+    alert('נא לבחור לפחות חודש אחד לייצוא');
+    return;
+  }
+
+  let excelContent = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">';
+  excelContent += '<head><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Expenses</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head>';
+  excelContent += '<body><table>';
+  excelContent += '<tr><th>תאריך</th><th>שנה</th><th>קטגוריה</th><th>סכום</th><th>פרטי עסק</th></tr>';
+  
+  const filteredExpenses = getFilteredExpenses().filter(expense => {
+    const monthKey = `${expense.date.getMonth() + 1}-${expense.date.getFullYear()}`;
+    return selectedMonths.includes(monthKey);
+  });
+  
+  filteredExpenses.forEach(expense => {
+    const date = `${expense.date.getDate()}/${expense.date.getMonth() + 1}/${expense.date.getFullYear()}`;
+    excelContent += `<tr>
+            <td>${date}</td>
+            <td>${expense.date.getFullYear()}</td>
+            <td>${expense.category}</td>
+            <td>${expense.amount.toFixed(2)}</td>
+            <td>${expense.business}</td>
+        </tr>`;
+  });
+  
+  excelContent += '</table></body></html>';
+  downloadFile(excelContent, 'expenses.xls', 'application/vnd.ms-excel');
+}
+
+function getSelectedMonths() {
+  const checkboxes = document.querySelectorAll('.month-export-checkbox:checked');
+  return Array.from(checkboxes).map(cb => cb.dataset.month);
+}
+
+function getFilteredExpenses() {
+  const categoryFilter = document.getElementById('categoryFilter').value;
+  if (categoryFilter === 'all') {
+    return expenses;
+  }
+  return expenses.filter(exp => exp.category === categoryFilter);
+}
+
+function downloadFile(content, fileName, mimeType) {
+  const blob = new Blob(['\ufeff' + content], {
+    type: mimeType
+  });
+  const url = window.URL.createObjectURL(blob);
+  const downloadLink = document.createElement('a');
+  downloadLink.href = url;
+  downloadLink.download = fileName;
+  document.body.appendChild(downloadLink);
+  downloadLink.click();
+  document.body.removeChild(downloadLink);
+  window.URL.revokeObjectURL(url);
+}
+
+let currentSort = {
+  column: 'date',
+  direction: 'desc'
+};
+
+function initSortableHeaders() {
+  document.querySelectorAll('.sortable-header').forEach(header => {
+    header.addEventListener('click', () => {
+      const column = header.dataset.sort;
+      if (currentSort.column === column) {
+        currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+      } else {
+        currentSort.column = column;
+        currentSort.direction = 'asc';
+      }
+      document.querySelectorAll('.sortable-header .sort-icon').forEach(icon => {
+        icon.className = 'sort-icon';
+      });
+      const icon = header.querySelector('.sort-icon');
+      icon.className = `sort-icon sort-${currentSort.direction}`;
+      updateTable();
+    });
+  });
+}
+
+function groupExpensesByMonth(expenses) {
+  return expenses.reduce((groups, expense) => {
+    const monthKey = `${expense.date.getMonth() + 1}-${expense.date.getFullYear()}`;
+    if (!groups[monthKey]) {
+      groups[monthKey] = [];
+    }
+    groups[monthKey].push(expense);
+    return groups;
+  }, {});
+}
+
+function getMonthName(monthNum) {
+  const months = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
+  return months[monthNum - 1];
+}
+
+document.getElementById('categoryFilter').addEventListener('change', updateTable);
+document.addEventListener('DOMContentLoaded', initSortableHeaders);
+</script>
+</body>
+</html>

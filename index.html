@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ניהול הוצאות</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="styles.css" rel="stylesheet">
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-light">
+  <div class="container-fluid py-4">
+    <div class="row">
+      <!-- Input Section -->
+      <div class="col-12 mb-4">
+        <div class="card shadow-sm">
+          <div class="card-header bg-primary text-white">
+            <h5 class="card-title mb-0">הזנת נתונים</h5>
+          </div>
+          <div class="card-body">
+            <div class="mb-3">
+              <textarea id="expenseInput" class="form-control" rows="5" 
+                placeholder="הכנס נתוני CSV (תאריך עסקה, שם בית העסק, סכום (₪), ענף, הערות)"></textarea>
+            </div>
+            <button onclick="processData()" class="btn btn-primary">
+              <i class="bi bi-arrow-clockwise"></i> עיבוד נתונים
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts Section -->
+      <div class="row mt-4">
+        <div class="col-md-6 mb-4">
+          <div class="card shadow-sm h-100">
+            <div class="card-body">
+              <div class="chart-wrapper">
+                <h5 class="chart-title">גרף הוצאות חודשי</h5>
+                <div class="chart-container">
+                  <canvas id="monthlyChart"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6 mb-4">
+          <div class="card shadow-sm h-100">
+            <div class="card-body">
+              <div class="chart-wrapper">
+                <h5 class="chart-title">התפלגות הוצאות לפי קטגוריה</h5>
+                <div class="chart-container">
+                  <canvas id="categoryChart"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Expenses Table Section -->
+      <div class="col-12">
+        <div class="card shadow-sm">
+          <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">רשימת הוצאות</h5>
+            <div class="d-flex align-items-center">
+              <select id="categoryFilter" class="form-select form-select-sm me-2">
+                <option value="all">כל הקטגוריות</option>
+              </select>
+              <div class="btn-group">
+                <button onclick="deleteSelected()" class="btn btn-sm btn-danger me-2">
+                  <i class="bi bi-trash"></i> מחק נבחרים
+                </button>
+                <button onclick="exportToExcel()" class="btn btn-sm btn-success me-2">
+                  <i class="bi bi-file-earmark-excel"></i> ייצוא ל-Excel
+                </button>
+                <button onclick="clearAllData()" class="btn btn-sm btn-danger">
+                  <i class="bi bi-trash-fill"></i> איפוס כל הנתונים
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table id="expenseTable" class="table table-hover mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th><input type="checkbox" class="form-check-input" onclick="toggleAllCheckboxes()"></th>
+                    <th class="sortable-header">תאריך</th>
+                    <th class="sortable-header">תיאור</th>
+                    <th class="sortable-header">סכום</th>
+                    <th class="sortable-header">קטגוריה</th>
+                    <th>הערות</th>
+                    <th>פעולות</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card-footer">
+            <strong>סה"כ: </strong><span id="totalAmount">₪0.00</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Duplicates Modal -->
+    <div class="modal fade" id="duplicatesModal" tabindex="-1">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">נמצאו כפילויות</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-header border-0 pb-0">
+            <button type="button" class="btn btn-danger" onclick="removeDuplicates()">הסר את כל הכפילויות</button>
+          </div>
+          <div class="modal-body">
+            <div class="table-responsive">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>תאריך</th>
+                    <th>תיאור</th>
+                    <th>סכום</th>
+                    <th>קטגוריה</th>
+                    <th>הערות</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">סגור</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container mt-4">
+      <h1>מעקב הוצאות</h1>
+      
+      <!-- טופס הוספת הוצאה -->
+      <div class="card mb-4">
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-2">
+              <label for="expenseDate" class="form-label">תאריך</label>
+              <input type="date" class="form-control" id="expenseDate">
+            </div>
+            <div class="col-md-3">
+              <label for="expenseDescription" class="form-label">תיאור</label>
+              <input type="text" class="form-control" id="expenseDescription">
+            </div>
+            <div class="col-md-2">
+              <label for="expenseAmount" class="form-label">סכום</label>
+              <input type="number" class="form-control" id="expenseAmount" step="0.01">
+            </div>
+            <div class="col-md-3">
+              <label for="expenseCategory" class="form-label">קטגוריה</label>
+              <input type="text" class="form-control" id="expenseCategory" list="categoryList">
+              <datalist id="categoryList"></datalist>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+              <button class="btn btn-primary w-100" onclick="addExpense()">הוסף</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- פילטר קטגוריות -->
+      <div class="category-filter mb-3">
+        <select class="form-select" id="categoryFilter" onchange="filterByCategory()">
+          <option value="">כל הקטגוריות</option>
+        </select>
+      </div>
+
+      <!-- טבלת הוצאות -->
+      <div id="expensesContainer"></div>
+
+      <!-- כפתורי ייצוא ומחיקה -->
+      <div class="mt-3">
+        <button class="btn btn-success me-2" onclick="exportToExcel()">ייצא לאקסל</button>
+        <button class="btn btn-danger" onclick="clearAllData()">מחק הכל</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>
+
+<html dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ניהול הוצאות</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="styles.css" rel="stylesheet">
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-light">
+  <div class="container-fluid py-4">
+    <div class="row">
+      <!-- Input Section -->
+      <div class="col-12 mb-4">
+        <div class="card shadow-sm">
+          <div class="card-header bg-primary text-white">
+            <h5 class="card-title mb-0">הזנת נתונים</h5>
+          </div>
+          <div class="card-body">
+            <div class="mb-3">
+              <textarea id="expenseInput" class="form-control" rows="5" 
+                placeholder="הכנס נתוני CSV (תאריך עסקה, שם בית העסק, סכום (₪), ענף, הערות)"></textarea>
+            </div>
+            <button onclick="processData()" class="btn btn-primary">
+              <i class="bi bi-arrow-clockwise"></i> עיבוד נתונים
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts Section -->
+      <div class="row mt-4">
+        <div class="col-md-6 mb-4">
+          <div class="card shadow-sm h-100">
+            <div class="card-body">
+              <div class="chart-wrapper">
+                <h5 class="chart-title">גרף הוצאות חודשי</h5>
+                <div class="chart-container">
+                  <canvas id="monthlyChart"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6 mb-4">
+          <div class="card shadow-sm h-100">
+            <div class="card-body">
+              <div class="chart-wrapper">
+                <h5 class="chart-title">התפלגות הוצאות לפי קטגוריה</h5>
+                <div class="chart-container">
+                  <canvas id="categoryChart"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Expenses Table Section -->
+      <div class="col-12">
+        <div class="card shadow-sm">
+          <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">רשימת הוצאות</h5>
+            <div class="d-flex align-items-center">
+              <select id="categoryFilter" class="form-select form-select-sm me-2">
+                <option value="all">כל הקטגוריות</option>
+              </select>
+              <div class="btn-group">
+                <button onclick="deleteSelected()" class="btn btn-sm btn-danger me-2">
+                  <i class="bi bi-trash"></i> מחק נבחרים
+                </button>
+                <button onclick="exportToExcel()" class="btn btn-sm btn-success me-2">
+                  <i class="bi bi-file-earmark-excel"></i> ייצוא ל-Excel
+                </button>
+                <button onclick="clearAllData()" class="btn btn-sm btn-danger">
+                  <i class="bi bi-trash-fill"></i> איפוס כל הנתונים
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table id="expenseTable" class="table table-hover mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th><input type="checkbox" class="form-check-input" onclick="toggleAllCheckboxes()"></th>
+                    <th class="sortable-header">תאריך</th>
+                    <th class="sortable-header">תיאור</th>
+                    <th class="sortable-header">סכום</th>
+                    <th class="sortable-header">קטגוריה</th>
+                    <th>הערות</th>
+                    <th>פעולות</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card-footer">
+            <strong>סה"כ: </strong><span id="totalAmount">₪0.00</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Duplicates Modal -->
+    <div class="modal fade" id="duplicatesModal" tabindex="-1">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">נמצאו כפילויות</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-header border-0 pb-0">
+            <button type="button" class="btn btn-danger" onclick="removeDuplicates()">הסר את כל הכפילויות</button>
+          </div>
+          <div class="modal-body">
+            <div class="table-responsive">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>תאריך</th>
+                    <th>תיאור</th>
+                    <th>סכום</th>
+                    <th>קטגוריה</th>
+                    <th>הערות</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">סגור</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container mt-4">
+      <!-- טופס הוספת הוצאה -->
+      <div class="card mb-4">
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-2">
+              <label for="expenseDate" class="form-label">תאריך</label>
+              <input type="date" class="form-control" id="expenseDate">
+            </div>
+            <div class="col-md-3">
+              <label for="expenseDescription" class="form-label">תיאור</label>
+              <input type="text" class="form-control" id="expenseDescription">
+            </div>
+            <div class="col-md-2">
+              <label for="expenseAmount" class="form-label">סכום</label>
+              <input type="number" class="form-control" id="expenseAmount" step="0.01">
+            </div>
+            <div class="col-md-3">
+              <label for="expenseCategory" class="form-label">קטגוריה</label>
+              <input type="text" class="form-control" id="expenseCategory" list="categoryList">
+              <datalist id="categoryList"></datalist>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+              <button class="btn btn-primary w-100" onclick="addExpense()">הוסף</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- פילטר קטגוריות -->
+      <div class="category-filter mb-3">
+        <select class="form-select" id="categoryFilter" onchange="filterByCategory()">
+          <option value="">כל הקטגוריות</option>
+        </select>
+      </div>
+
+      <!-- כפתורי ייצוא ומחיקה -->
+      <div class="mb-4">
+        <button class="btn btn-success me-2" onclick="exportToExcel()">ייצא לאקסל</button>
+        <button class="btn btn-danger" onclick="clearAllData()">מחק הכל</button>
+      </div>
+
+      <h1 class="mb-4">מעקב הוצאות</h1>
+
+      <!-- טבלת הוצאות -->
+      <div id="expensesContainer"></div>
+
+    </div>
+
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>
