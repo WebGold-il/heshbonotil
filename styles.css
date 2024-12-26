@@ -336,3 +336,67 @@ th {
   font-size: 1.2rem;
   font-weight: 500;
 }
+
+.chart-wrapper {
+    width: 100%;
+    height: 100%;
+    min-height: 300px;
+    position: relative;
+}
+
+.chart-container {
+    width: 100%;
+    height: 100%;
+    min-height: 300px;
+    position: relative;
+}
+
+.chart-title {
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.monthly-summary-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #eee;
+}
+
+.month-header {
+    background-color: #f8f9fa;
+}
+
+.month-title {
+    font-weight: bold;
+    padding: 0.75rem;
+}
+
+.amount {
+    text-align: left;
+    direction: ltr;
+}
+
+.sortable-header {
+    cursor: pointer;
+}
+
+.sortable-header:hover {
+    background-color: #f8f9fa;
+}
+
+#noResultsMessage {
+    text-align: center;
+    margin-top: 1rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .chart-wrapper {
+        min-height: 250px;
+    }
+    
+    .chart-container {
+        min-height: 250px;
+    }
+}
